@@ -136,9 +136,6 @@ else
     end,
   })
 
-  -- TODO: add auto cmd to compile tex files per saving
-  -- TODO: add auto cmd to build project
-
   -- [[ Install `lazy.nvim` plugin manager ]]
   --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
   local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
@@ -267,6 +264,7 @@ else
           { '<leader>s', group = '[S]earch' },
           { '<leader>w', group = '[W]orkspace' },
           { '<leader>t', group = '[T]oggle' },
+          { '<leader>l', group = '[L]atex' },
           { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
         },
       },
@@ -614,9 +612,8 @@ else
           -- texlab
           texlab = {
             filetypes = { 'tex', 'plaintex', 'bib' },
-            -- keys = {
-            --   { '<leader>b', '<cmd>TexlabBuild<cr>', desc = '[B]uild tex' },
-            -- },
+            vim.keymap.set('n', '<leader>lb', '<cmd>TexlabBuild<cr>', { desc = '[B]build pdf' }),
+            vim.keymap.set('n', '<leader>lc', '<cmd>TexlabCleanAuxiliary<cr>', { desc = '[C]lean auxiliary files' }),
             settings = {
               texlab = {
                 build = {
@@ -843,6 +840,9 @@ else
             { name = 'luasnip' },
             { name = 'path' },
             { name = 'nvim_lsp_signature_help' },
+            per_filetype = {
+              codecompanion = { 'codecompanion' },
+            },
           },
         }
       end,
@@ -960,6 +960,120 @@ else
         leap.add_default_mappings(true)
         vim.keymap.del({ 'x', 'o' }, 'x')
         vim.keymap.del({ 'x', 'o' }, 'X')
+      end,
+    },
+    {
+      'zbirenbaum/copilot.lua',
+      lazy = true,
+      cmd = 'Copilot',
+      vim.keymap.set('n', '<leader>cp', '<cmd>Copilot panel<cr>', { desc = '[C]opilot: [P]anel' }),
+      event = 'InsertEnter',
+      config = function()
+        require('copilot').setup {
+          panel = {
+            enabled = true,
+            auto_refresh = false,
+            keymap = {
+              jump_prev = 'C-n',
+              jump_next = 'C-p',
+              accept = 'C-j',
+              refresh = 'gr',
+              open = '<C-CR>',
+            },
+            layout = {
+              position = 'bottom', -- | top | left | right | horizontal | vertical
+              ratio = 0.4,
+            },
+          },
+          suggestion = {
+            enabled = true,
+            auto_trigger = true,
+            hide_during_completion = true,
+            debounce = 75,
+            trigger_on_accept = true,
+            keymap = {
+              accept = '<C-y>',
+              accept_word = false,
+              accept_line = false,
+              next = '<C-n>',
+              prev = '<C-p>',
+              dismiss = '<C-j>',
+            },
+          },
+          filetypes = {
+            yaml = false,
+            markdown = false,
+            help = false,
+            gitcommit = false,
+            gitrebase = false,
+            hgcommit = false,
+            svn = false,
+            cvs = false,
+            ['.'] = false,
+          },
+          auth_provider_url = nil, -- URL to authentication provider, if not "https://github.com/"
+          logger = {
+            file = vim.fn.stdpath 'log' .. '/copilot-lua.log',
+            file_log_level = vim.log.levels.OFF,
+            print_log_level = vim.log.levels.WARN,
+            trace_lsp = 'off', -- "off" | "messages" | "verbose"
+            trace_lsp_progress = false,
+            log_lsp_messages = false,
+          },
+          copilot_node_command = 'node', -- Node.js version must be > 20
+          workspace_folders = {},
+          copilot_model = '', -- Current LSP default is gpt-35-turbo, supports gpt-4o-copilot
+          root_dir = function()
+            return vim.fs.dirname(vim.fs.find('.git', { upward = true })[1])
+          end,
+          -- should_attach = function(_, _)
+          --   if not vim.bo.buflisted then
+          --     logger.debug "not attaching, buffer is not 'buflisted'"
+          --     return false
+          --   end
+          --
+          --   if vim.bo.buftype ~= '' then
+          --     logger.debug("not attaching, buffer 'buftype' is " .. vim.bo.buftype)
+          --     return false
+          --   end
+          --
+          --   return true
+          -- end,
+          server = {
+            type = 'nodejs', -- "nodejs" | "binary"
+            custom_server_filepath = nil,
+          },
+          server_opts_overrides = {},
+        }
+      end,
+    },
+
+    {
+      'olimorris/codecompanion.nvim',
+      dependencies = {
+        'nvim-lua/plenary.nvim',
+        'nvim-treesitter/nvim-treesitter',
+      },
+      vim.keymap.set('n', '<leader>ct', '<cmd>CodeCompanionChat toggle<cr>', { desc = '[C]odecompanion: [T]ogging chat' }),
+      vim.keymap.set('n', '<leader>cc', '<cmd>CodeCompanionActions<cr>', { desc = '[C]odecompanion: [C]ode actions' }),
+      vim.keymap.set('n', '<leader>ci', '<cmd>CodeCompanion<cr>', { desc = '[C]odecompanion: [I]nline assistant' }),
+      config = function()
+        require('codecompanion').setup {
+          opts = {
+            language = 'Chinese',
+          },
+          strategies = {
+            chat = {
+              adapter = 'copilot',
+            },
+            inline = {
+              adapter = 'copilot',
+            },
+            cmd = {
+              adapter = 'copilot',
+            },
+          },
+        }
       end,
     },
     --
